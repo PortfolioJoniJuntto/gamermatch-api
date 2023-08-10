@@ -1,0 +1,31 @@
+{
+  "name": "gamermatch-api",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "sst dev --stage dev",
+    "build": "AWS_PROFILE=huikka-dev sst build --stage dev",
+    "deploy:dev": "sst deploy --stage dev",
+    "deploy:prod": "AWS_PROFILE=huikka-prod sst deploy --stage prod",
+    "remove": "AWS_PROFILE=huikka-dev sst remove --stage dev",
+    "console": "sst console",
+    "typecheck": "tsc --noEmit",
+    "build:prisma": "prisma db pull && prisma generate"
+  },
+  "devDependencies": {
+    "@tsconfig/node16": "^16.1.0",
+    "@types/fs-extra": "^11.0.1",
+    "aws-cdk-lib": "2.88.0",
+    "constructs": "10.2.69",
+    "fs-extra": "^11.1.1",
+    "sst": "^2.22.6",
+    "typescript": "^5.1.6"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "dependencies": {
+    "prisma": "^5.0.0",
+    "sharp": "^0.32.4"
+  }
+}

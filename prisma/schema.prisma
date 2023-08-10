@@ -1,0 +1,207 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-1.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model connections {
+  uuid                                String    @id(map: "connections_pk") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_uuid1                          String?   @db.Uuid
+  user_uuid2                          String?   @db.Uuid
+  created_at                          DateTime? @default(now()) @db.Timestamp(6)
+  updated_at                          DateTime? @db.Timestamp(6)
+  deleted_at                          DateTime? @db.Timestamp(6)
+  status                              String?   @db.VarChar(64)
+  chat_uuid                           String?   @db.Uuid
+  chats                               chats[]
+  users_connections_user_uuid1Tousers users?    @relation("connections_user_uuid1Tousers", fields: [user_uuid1], references: [uuid], onDelete: Cascade, onUpdate: NoAction, map: "connections_users_uuid_fk")
+  users_connections_user_uuid2Tousers users?    @relation("connections_user_uuid2Tousers", fields: [user_uuid2], references: [uuid], onDelete: Cascade, onUpdate: NoAction, map: "connections_users_uuid_fk2")
+}
+
+model dislikes {
+  user_uuid                             String    @db.Uuid
+  liked_user_uuid                       String    @db.Uuid
+  created_at                            DateTime? @db.Timestamp(6)
+  users_dislikes_user_uuidTousers       users     @relation("dislikes_user_uuidTousers", fields: [user_uuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "dislikes_users_uuid_fk")
+  users_dislikes_liked_user_uuidTousers users     @relation("dislikes_liked_user_uuidTousers", fields: [liked_user_uuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "dislikes_users_uuid_fk2")
+
+  @@id([user_uuid, liked_user_uuid], map: "dislikes_pk")
+}
+
+model game_genres {
+  game_uuid String @db.Uuid
+  genre_id  BigInt
+  games     games  @relation(fields: [game_uuid], references: [uuid], onDelete: Cascade, onUpdate: NoAction, map: "game_genres_games_uuid_fk")
+  genres    genres @relation(fields: [genre_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "game_genres_genres_id_fk")
+
+  @@id([game_uuid, genre_id], map: "game_genres_pk")
+}
+
+model game_tags {
+  game_uuid String @db.Uuid
+  tag_id    BigInt
+  tags      tags   @relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "game_tags_tags_id_fk")
+  games     games  @relation(fields: [game_uuid], references: [uuid], onDelete: Cascade, onUpdate: NoAction, map: "games_tags_games_uuid_fk")
+
+  @@id([game_uuid, tag_id], map: "games_tags_pk")
+}
+
+model games {
+  name              String?          @db.VarChar(255)
+  uuid              String           @id(map: "games_pk") @db.Uuid
+  igdb_id           BigInt?
+  released          DateTime?        @db.Date
+  background_image  String?          @db.VarChar(512)
+  rating            Decimal?         @db.Decimal(5, 2)
+  metacritic        Int?
+  updated_at        DateTime?        @db.Timestamp(6)
+  created_at        DateTime?        @default(now()) @db.Timestamp(6)
+  cover_image       String?          @db.VarChar(512)
+  background_image2 String?          @db.VarChar(512)
+  top               Int?
+  game_genres       game_genres[]
+  game_platforms    game_platforms[]
+  game_tags         game_tags[]
+  user_games        user_games[]
+
+  @@index([name], map: "games_name_index")
+}
+
+model genres {
+  id          BigInt        @id(map: "genres_pk") @default(autoincrement())
+  name        String?       @db.VarChar(64)
+  slug        String?       @db.VarChar(64)
+  game_genres game_genres[]
+}
+
+model likes {
+  user_uuid                          String    @db.Uuid
+  liked_user_uuid                    String    @db.Uuid
+  created_at                         DateTime? @db.Timestamp(6)
+  users_likes_user_uuidTousers       users     @relation("likes_user_uuidTousers", fields: [user_uuid], references: [uuid], onDelete: Cascade, onUpdate: NoAction, map: "likes_users_uuid_fk")
+  users_likes_liked_user_uuidTousers users     @relation("likes_liked_user_uuidTousers", fields: [liked_user_uuid], references: [uuid], onDelete: Cascade, onUpdate: NoAction, map: "likes_users_uuid_fk2")
+
+  @@id([user_uuid, liked_user_uuid], map: "likes_pk")
+}
+
+model platforms {
+  id             BigInt           @id(map: "platforms_pk") @default(autoincrement())
+  name           String?          @db.VarChar(64)
+  image          String?          @db.VarChar(1024)
+  slug           String?          @db.VarChar(64)
+  game_platforms game_platforms[]
+  user_platforms user_platforms[]
+}
+
+model swipes {
+  id                                      BigInt    @id(map: "swipes_pk") @default(autoincrement())
+  user_uuid                               String?   @db.Uuid
+  created_at                              DateTime? @db.Timestamp(6)
+  swiped_to_user_uuid                     String?   @db.Uuid
+  like                                    Boolean?
+  users_swipes_swiped_to_user_uuidTousers users?    @relation("swipes_swiped_to_user_uuidTousers", fields: [swiped_to_user_uuid], references: [uuid], onDelete: Cascade, onUpdate: NoAction, map: "swipes_users_uuid_fk")
+  users_swipes_user_uuidTousers           users?    @relation("swipes_user_uuidTousers", fields: [user_uuid], references: [uuid], onDelete: Cascade, onUpdate: NoAction, map: "swipes_users_uuid_fk2")
+}
+
+model tags {
+  id             BigInt           @id(map: "game_tags_pk") @default(autoincrement())
+  name           String?          @db.VarChar(64)
+  slug           String?          @db.VarChar(64)
+  game_tags      game_tags[]
+  user_interests user_interests[]
+}
+
+model user_games {
+  user_uuid String @db.Uuid
+  game_uuid String @db.Uuid
+  games     games  @relation(fields: [game_uuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "user_games_games_uuid_fk")
+  users     users  @relation(fields: [user_uuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "user_games_users_uuid_fk")
+
+  @@id([game_uuid, user_uuid], map: "user_games_pk")
+}
+
+model user_interests {
+  user_uuid String @db.Uuid
+  tag_id    BigInt
+  tags      tags   @relation(fields: [tag_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "user_interests_tags_id_fk")
+  users     users  @relation(fields: [user_uuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "user_interests_users_uuid_fk")
+
+  @@id([user_uuid, tag_id], map: "user_interests_pk")
+}
+
+model user_platforms {
+  user_uuid   String    @db.Uuid
+  platform_id BigInt
+  platforms   platforms @relation(fields: [platform_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "user_platforms_platforms_id_fk")
+  users       users     @relation(fields: [user_uuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "user_platforms_users_uuid_fk")
+
+  @@id([user_uuid, platform_id], map: "user_platforms_pk")
+}
+
+model users {
+  uuid                                      String           @id(map: "users_pk") @db.Uuid
+  gamertag                                  String?          @unique(map: "users_pk2") @db.VarChar(64)
+  created_at                                DateTime?        @default(now()) @db.Timestamp(6)
+  updated_at                                DateTime?        @db.Timestamp(6)
+  image                                     String?          @db.VarChar(512)
+  description                               String?
+  geolocation                               String?          @db.VarChar(64)
+  country                                   String?          @db.VarChar(64)
+  only_same_country                         Boolean?
+  email                                     String?          @unique(map: "users_email_uindex") @db.VarChar(512)
+  enabled                                   Boolean?         @default(true)
+  age                                       Int?
+  competitive                               Boolean?
+  push_notifications                        Boolean?
+  push_token                                String?
+  only_local                                Boolean?
+  connections_connections_user_uuid1Tousers connections[]    @relation("connections_user_uuid1Tousers")
+  connections_connections_user_uuid2Tousers connections[]    @relation("connections_user_uuid2Tousers")
+  dislikes_dislikes_user_uuidTousers        dislikes[]       @relation("dislikes_user_uuidTousers")
+  dislikes_dislikes_liked_user_uuidTousers  dislikes[]       @relation("dislikes_liked_user_uuidTousers")
+  invites                                   invites[]
+  likes_likes_user_uuidTousers              likes[]          @relation("likes_user_uuidTousers")
+  likes_likes_liked_user_uuidTousers        likes[]          @relation("likes_liked_user_uuidTousers")
+  swipes_swipes_swiped_to_user_uuidTousers  swipes[]         @relation("swipes_swiped_to_user_uuidTousers")
+  swipes_swipes_user_uuidTousers            swipes[]         @relation("swipes_user_uuidTousers")
+  user_games                                user_games[]
+  user_interests                            user_interests[]
+  user_platforms                            user_platforms[]
+
+  @@index([geolocation], map: "users_geolocation_index")
+}
+
+model game_platforms {
+  game_uuid   String    @db.Uuid
+  platform_id BigInt
+  games       games     @relation(fields: [game_uuid], references: [uuid], onDelete: Cascade, onUpdate: NoAction, map: "game_platforms_games_uuid_fk")
+  platforms   platforms @relation(fields: [platform_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "game_platforms_platforms_id_fk")
+
+  @@id([game_uuid, platform_id], map: "game_platforms_pk")
+}
+
+model chats {
+  uuid            String       @id(map: "chats_pk") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_uuid1      String       @db.Uuid
+  user_uuid2      String       @db.Uuid
+  time_stamp      DateTime     @default(now()) @db.Timestamp(6)
+  message         String
+  sender_uuid     String       @db.Uuid
+  connection_uuid String?      @db.Uuid
+  connections     connections? @relation(fields: [connection_uuid], references: [uuid], onUpdate: NoAction)
+}
+
+model invites {
+  uuid       String    @id(map: "invites_pk") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code       String    @unique
+  used       Boolean?
+  created_at DateTime  @default(now()) @db.Timestamp(6)
+  usersUuid  String?   @db.Uuid
+  used_at    DateTime?
+  used_by    String?   @db.Uuid
+  users      users?    @relation(fields: [usersUuid], references: [uuid])
+}
